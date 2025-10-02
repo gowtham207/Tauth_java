@@ -33,7 +33,7 @@ public class AuthController {
     private PasswordConfig passwordConfig;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponseModel<LoginResponseModel>> postMethodName(@RequestBody LoginPayloadModel entity) {
+    public ResponseEntity<ApiResponseModel<LoginResponseModel>> LoginUser(@RequestBody LoginPayloadModel entity) {
 
         // String password =
         // passwordConfig.PasswordEncoder().encode(entity.getPassword());
