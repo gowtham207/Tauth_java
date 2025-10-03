@@ -16,6 +16,7 @@ public class SecurityConfig {
                         // allow swagger
                         .requestMatchers(
                                 "/v3/api-docs/**",
+                                "/js/**", "/css/**", "/images/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html")
                         .permitAll()
