@@ -57,11 +57,13 @@ public class AuthController {
             String refreshToken = jwtUtils.GetRefreshToken(LoginUser.getUsername(),
                     LoginUser.getUserId());
             long expiresIn = jwtUtils.GetExpirationTime();
+            userRepo.updateLastLoginTime(LoginUser.getUserId());
             LoginResponseModel response = new LoginResponseModel(accessToken, "bearer",
                     expiresIn, refreshToken);
 
             return ResponseEntity.ok().body(new ApiResponseModel<>(true, "Login successful", response));
         }
+
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
