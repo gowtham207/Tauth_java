@@ -14,7 +14,9 @@ import com.gowtham.project01.Schema.LoginResponseModel;
 import com.gowtham.project01.configuration.PasswordConfig;
 import com.gowtham.project01.models.UserModel;
 import com.gowtham.project01.repo.UserRepo;
-import com.gowtham.project01.utils.JWTUtils;
+import com.gowtham.project01.service.AuthService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -24,47 +26,22 @@ public class AuthController {
     @Autowired
     private UserRepo userRepo;
 
-    // token encryption and decryption package
     @Autowired
-    private JWTUtils jwtUtils;
+    private AuthService authService;
 
     // password encryption and decryption package
     @Autowired
     private PasswordConfig passwordConfig;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponseModel<LoginResponseModel>> LoginUser(@RequestBody LoginPayloadModel entity) {
-
-        // String password =
-        // passwordConfig.PasswordEncoder().encode(entity.getPassword());
+    public ResponseEntity<ApiResponseModel<LoginResponseModel>> LoginUser(HttpServletRequest req,
+                    @RequestBody LoginPayloadModel entity) {
         String username = entity.getUsername();
-        UserModel LoginUser = userRepo.findByUsername(username);
+        String password = entity.getPassword();
 
-        if (LoginUser == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
+        if (username != null && password != null) {
+                return authService.loginUserService(req, username, password);
         }
-
-        if (passwordConfig.PasswordEncoder().matches(entity.getPassword(),
-                LoginUser.getPassword())) {
-
-            if (!LoginUser.getIsVerified()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponseModel<>(false, "User is not active", null));
-            }
-            String accessToken = jwtUtils.GetAccessToken(LoginUser.getUsername(),
-                    LoginUser.getUserId());
-            String refreshToken = jwtUtils.GetRefreshToken(LoginUser.getUsername(),
-                    LoginUser.getUserId());
-            long expiresIn = jwtUtils.GetExpirationTime();
-            userRepo.updateLastLoginTime(LoginUser.getUserId());
-            LoginResponseModel response = new LoginResponseModel(accessToken, "bearer",
-                    expiresIn, refreshToken);
-
-            return ResponseEntity.ok().body(new ApiResponseModel<>(true, "Login successful", response));
-        }
-
-
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
     }

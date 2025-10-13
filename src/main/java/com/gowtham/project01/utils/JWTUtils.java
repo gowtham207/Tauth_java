@@ -19,13 +19,13 @@ public class JWTUtils {
     }
 
     public String GetAccessToken(String username, UUID id) {
-        String value = username + id.toString();
+        String value = username + "//" + id.toString();
         return Jwts.builder().setId(id.toString()).setSubject(value).setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiresIn)).signWith(key).compact();
     }
 
     public String GetRefreshToken(String username, UUID id) {
-        String value = username + id.toString();
+        String value = username + "//" + id.toString();
         return Jwts.builder().setId(id.toString()).setSubject(value).setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpire)).signWith(key).compact();
     }
