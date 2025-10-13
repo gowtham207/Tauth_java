@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class HealthCheck {
     @GetMapping
     public String HealthCheckApi(@RequestParam(required = false, defaultValue = "World") String param) {
+        System.out.println("Health Check API called with param: " + param);
         return "Health Check API " + param;
     }
 
