@@ -21,7 +21,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html")
                         .permitAll()
                         // allow login & signup without authentication
-                        .requestMatchers("/api/v1/signup", "/api/v1/login", "/").permitAll()
+                        .requestMatchers("/api/v1/signup", "/api/v1/login", "/health").permitAll()
                         // everything else requires authentication
                         .anyRequest().authenticated());
 
