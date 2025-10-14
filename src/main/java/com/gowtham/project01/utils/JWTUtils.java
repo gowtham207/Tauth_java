@@ -4,6 +4,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import com.gowtham.project01.Schema.TokenModel;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -41,6 +42,12 @@ public class JWTUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public TokenModel GetUsernameFromToken(String token) {
+        String subject = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getSubject();
+        String id = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getId();
+        return new TokenModel(subject, id);
     }
 
 }
