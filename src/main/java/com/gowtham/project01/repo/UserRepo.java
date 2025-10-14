@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import com.gowtham.project01.models.UserModel;
 
 import jakarta.transaction.Transactional;
@@ -19,6 +18,9 @@ public interface UserRepo extends JpaRepository<UserModel, UUID> {
     UserModel findByUserId(UUID userId);
 
     UserModel findByUsername(String username);
+
+    @Query("SELECT u FROM UserModel u WHERE u.username = :username AND u.userId = :userId")
+    UserModel findByUsernameAndId(@Param("username") String username, @Param("userId") UUID userId);
 
     @Modifying
     @Transactional
