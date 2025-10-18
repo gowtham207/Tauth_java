@@ -5,7 +5,7 @@ REM Run Gradle clean and bootRun commands on Windows
 REM ==================================================
 
 echo Cleaning project...
-call .\gradlew clean
+call .\gradlew clean 
 
 if %errorlevel% neq 0 (
     echo ❌ Gradle clean failed.
@@ -13,7 +13,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Starting Spring Boot application...
-call .\gradlew bootRun
+call .\gradlew bootRun --stacktrace
 
 if %errorlevel% neq 0 (
     echo ❌ Application failed to start.

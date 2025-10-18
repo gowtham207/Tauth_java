@@ -1,62 +1,69 @@
-// package com.gowtham.project01.utils;
+package com.gowtham.project01.utils;
 
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.stereotype.Component;
-// import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-// import com.gowtham.project01.models.UserModel;
-// import com.gowtham.project01.repo.UserRepo;
+import com.gowtham.project01.configuration.Constants;
+import com.gowtham.project01.models.UserModel;
+import com.gowtham.project01.repo.UserRepo;
 
-// import jakarta.servlet.FilterChain;
-// import jakarta.servlet.ServletException;
-// import jakarta.servlet.http.HttpServletRequest;
-// import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-// @Component
-// public class JWTAuthencatorFilter extends OncePerRequestFilter {
+@Component
+public class JWTAuthencatorFilter extends OncePerRequestFilter {
 
-//     @Autowired
-//     private JWTUtils jwtUtils;
+    @Autowired
+    private JWTUtils jwtUtils;
 
-//     @Autowired
-//     private UserRepo userRepo;
+    @Autowired
+    private UserRepo userRepo;
 
-//     @Override
-//     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-//             FilterChain filterChain) throws ServletException, java.io.IOException {
-//         String authHeader = request.getHeader("Authorization");
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return Constants.PUBLIC_URLS.stream().anyMatch(url -> path.toLowerCase().startsWith(url.toLowerCase()));
+    }
 
-//         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//             response.getWriter().write("Missing or invalid Authorization header");
-//             return;
-//         }
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, java.io.IOException {
+        String authHeader = request.getHeader("Authorization");
 
-//         String token = authHeader.substring(7);
-//         String userId = jwtUtils.GetUserIdFromToken(token);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Missing or invalid Authorization header");
+            return;
+        }
 
-//         if (userId == null) {
-//             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//             response.getWriter().write("Invalid token");
-//             return;
-//         }
+        String token = authHeader.substring(7);
+        String userId = jwtUtils.GetUserIdFromToken(token);
 
-//         if (jwtUtils.IsTokenValid(token)) {
+        if (userId == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid token");
+            return;
+        }
 
-//             UserModel user = userRepo.findByUserId(java.util.UUID.fromString(userId));
-//             if (user == null) {
-//                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//                 response.getWriter().write("User not found");
-//                 return;
-//             }
+        if (jwtUtils.IsTokenValid(token)) {
 
-//             filterChain.doFilter(request, response);
-//         } else {
-//             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//             response.getWriter().write("Invalid token");
-//             return;
-//         }
+            UserModel user = userRepo.findByUserId(java.util.UUID.fromString(userId));
+            if (user == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("User not found");
+                return;
+            }
 
-//     }
+            filterChain.doFilter(request, response);
+        } else {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid token");
+            return;
+        }
 
-// }
+    }
+
+}
