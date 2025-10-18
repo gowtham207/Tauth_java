@@ -7,75 +7,62 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.gowtham.project01.Schema.ApiResponseModel;
 import com.gowtham.project01.Schema.LoginPayloadModel;
-import com.gowtham.project01.Schema.LoginResponseModel;
+import com.gowtham.project01.Schema.SignupMFARequestModel;
+import com.gowtham.project01.Schema.SignupResponseModel;
 import com.gowtham.project01.Schema.TokenPayloadModel;
 import com.gowtham.project01.Schema.TokenResponseModel;
-import com.gowtham.project01.configuration.PasswordConfig;
 import com.gowtham.project01.models.UserModel;
-import com.gowtham.project01.repo.UserRepo;
 import com.gowtham.project01.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-
 
 @RestController
 @RequestMapping("/api/v1")
 public class AuthController {
 
-    // user Repo
-    @Autowired
-    private UserRepo userRepo;
+        @Autowired
+        private AuthService authService;
 
-    @Autowired
-    private AuthService authService;
+        @PostMapping("/authorizer")
+        public ResponseEntity<ApiResponseModel<TokenResponseModel>> postMethodName(
+                        @RequestBody TokenPayloadModel entity) {
+                String token = entity.getToken();
+                if (token == null || token.isEmpty() || !authService.isUserVerified(token)) {
+                        return ResponseEntity
+                                        .status(HttpStatus.UNAUTHORIZED)
+                                        .body(new ApiResponseModel<>(false, "Invalid token",
+                                                        new TokenResponseModel(false, "Invalid token")));
+                }
 
-    // password encryption and decryption package
-    @Autowired
-    private PasswordConfig passwordConfig;
-
-    @PostMapping("/authorizer")
-    public ResponseEntity<ApiResponseModel<TokenResponseModel>> postMethodName(@RequestBody TokenPayloadModel entity) {
-            String token = entity.getToken();
-            if (token == null || token.isEmpty() || !authService.isUserVerified(token)) {
-                    return ResponseEntity
-                                    .status(HttpStatus.UNAUTHORIZED)
-                                    .body(new ApiResponseModel<>(false, "Invalid token",
-                                                    new TokenResponseModel(false, "Invalid token")));
-            }
-
-            return ResponseEntity
-                            .ok(new ApiResponseModel<>(true, "Success", new TokenResponseModel(true, "Valid token")));
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponseModel<LoginResponseModel>> LoginUser(HttpServletRequest req,
-                    @RequestBody LoginPayloadModel entity) {
-        String username = entity.getUsername();
-        String password = entity.getPassword();
-
-        if (username != null && password != null) {
-                return authService.loginUserService(req, username, password);
-        }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
-    }
-
-
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponseModel<String>> CreateUser(@RequestBody UserModel entity) {
-        if (userRepo.findByEmail(entity.getEmail()) != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponseModel<String>(false, "Email already exists",
-                            "Please Login with different email"));
+                return ResponseEntity
+                                .ok(new ApiResponseModel<>(true, "Success",
+                                                new TokenResponseModel(true, "Valid token")));
         }
 
-        entity.setPassword(passwordConfig.PasswordEncoder().encode(entity.getPassword()));
-        UserModel savedUser = userRepo.save(entity);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponseModel<String>(true, "User created successfully",
-                        savedUser.getUserId().toString()));
+        @PostMapping("/login")
+        public ResponseEntity<ApiResponseModel<String>> LoginUser(HttpServletRequest req,
+                        @RequestBody LoginPayloadModel entity) {
+                String username = entity.getUsername();
+                String password = entity.getPassword();
 
-    }
+                if (username != null && password != null) {
+                        return authService.loginUserService(req, username, password);
+                }
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
+        }
+
+        @PostMapping("/signup")
+        public ResponseEntity<ApiResponseModel<SignupResponseModel>> CreateUser(HttpServletRequest req,
+                        @RequestBody UserModel entity) {
+                return authService.SignupUserService(req, entity);
+        }
+
+        @PostMapping("/signup/mfa")
+        public ResponseEntity<ApiResponseModel<String>> postMethodName(HttpServletRequest req,
+                        @RequestBody SignupMFARequestModel entity) {
+                return authService.VerifySignupMFA(req, entity);
+        }
+
 }

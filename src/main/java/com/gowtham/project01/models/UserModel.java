@@ -78,6 +78,15 @@ public class UserModel {
     @Column(name = "zipcode")
     private String zipcode;
 
+    @Column(name = "mfa_enabled", nullable = false)
+    @Builder.Default
+    @JsonIgnore
+    private Boolean mfaEnabled = false;
+
+    @Column(name = "mfa_secret")
+    @JsonIgnore
+    private String mfaSecret;
+
     @Enumerated(EnumType.STRING)
     @JsonIgnore
     @Column(name = "status", nullable = false)
