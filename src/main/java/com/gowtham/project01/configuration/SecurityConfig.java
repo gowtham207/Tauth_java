@@ -1,4 +1,5 @@
 package com.gowtham.project01.configuration;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,14 +15,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // disable CSRF for APIs
                 .authorizeHttpRequests(auth -> auth
                         // allow swagger
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/js/**", "/css/**", "/images/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html")
+                        .requestMatchers(Constants.PUBLIC_URLS.toArray(new String[0]))
                         .permitAll()
-                        // allow login & signup without authentication
-                        .requestMatchers("/api/v1/signup", "/api/v1/login", "/health", "/api/v1/authorizer").permitAll()
+                        .requestMatchers("/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/index.html",
+                                "/swagger-ui/swagger-ui.css",
+                                "/swagger-ui/swagger-ui-bundle.js",
+                                "/swagger-ui/swagger-ui-standalone-preset.js",
+                                "/swagger-ui/swagger-initializer.js")
+                        .permitAll()
                         // everything else requires authentication
                         .anyRequest().authenticated());
 
@@ -33,10 +37,13 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
+                String allowedOrigins = System.getProperty("CORS_ALLOWED_ORIGINS", "*");
+                String allowedMethods = System.getProperty("CORS_ALLOWED_METHODS", "GET, POST, PUT, DELETE, OPTIONS");
+                String allowedHeaders = System.getProperty("CORS_ALLOWED_HEADERS", "*");
                 registry.addMapping("/**")
-                        .allowedOrigins("*")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
+                        .allowedOrigins(allowedOrigins.split(","))
+                        .allowedMethods(allowedMethods.split(", "))
+                        .allowedHeaders(allowedHeaders.split(", "));
             }
         };
     }

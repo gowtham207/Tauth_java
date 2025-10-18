@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.gowtham.project01.configuration.Constants;
 import com.gowtham.project01.models.UserModel;
 import com.gowtham.project01.repo.UserRepo;
 
@@ -20,6 +21,12 @@ public class JWTAuthencatorFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserRepo userRepo;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return Constants.PUBLIC_URLS.stream().anyMatch(url -> path.toLowerCase().startsWith(url.toLowerCase()));
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,

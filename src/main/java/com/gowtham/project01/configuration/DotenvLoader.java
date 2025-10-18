@@ -29,11 +29,14 @@ public class DotenvLoader implements EnvironmentPostProcessor {
         if (dotenv.get("DB_PASSWORD") != null) {
             props.put("spring.datasource.password", dotenv.get("DB_PASSWORD"));
         }
-        // DB_SCHEMA
         if (dotenv.get("DB_SCHEMA") != null) {
             props.put("spring.jpa.properties.hibernate.default_schema", dotenv.get("DB_SCHEMA"));
         }
-
         environment.getPropertySources().addFirst(new MapPropertySource("dotenv", props));
+
+        System.setProperty("CORS_ALLOWED_ORIGINS", dotenv.get("CORS_ALLOWED_ORIGINS"));
+        System.setProperty("CORS_ALLOWED_METHODS", dotenv.get("CORS_ALLOWED_METHODS"));
+        System.setProperty("CORS_ALLOWED_HEADERS", dotenv.get("CORS_ALLOWED_HEADERS"));
+
     }
 }
