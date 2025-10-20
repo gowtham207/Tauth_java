@@ -43,14 +43,14 @@ public class AuthController {
         @PostMapping("/login")
         public ResponseEntity<ApiResponseModel<String>> LoginUser(HttpServletRequest req,
                         @RequestBody LoginPayloadModel entity) {
-                String username = entity.getUsername();
+                String email = entity.getEmail();
                 String password = entity.getPassword();
 
-                if (username != null && password != null) {
-                        return authService.loginUserService(req, username, password);
+                if (email != null && password != null) {
+                        return authService.loginUserService(req, email, password);
                 }
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
+                                .body(new ApiResponseModel<>(false, "Email or password incorrect", null));
         }
 
         @PostMapping("/signup")
