@@ -1,1 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Emblema+One&display=swap');
 @import "tailwindcss";
+
+
+.gradient01 {
+  background-image: linear-gradient(
+    to bottom,
+    #960cf0,
+    #a543ed,
+    #b164ea,
+    #bc80e6,
+    #c59be1
+  );
+}
+
+.center-align-flex {
+  @apply flex min-h-screen w-full items-center justify-center;
+}
+
+
+.title-font{
+    font-family :"Emblema One", system-ui;
+}
