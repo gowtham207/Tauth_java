@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 
 import com.gowtham.project01.Schema.ApiResponseModel;
 import com.gowtham.project01.Schema.LoginPayloadModel;
+import com.gowtham.project01.Schema.LoginResponseModel;
 import com.gowtham.project01.configuration.PasswordConfig;
 import com.gowtham.project01.models.AdminUserModel;
 import com.gowtham.project01.repo.AdminUserRepo;
+import com.gowtham.project01.utils.JWTUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -20,6 +22,9 @@ public class AdminUserAuthService {
 
     @Autowired
     private PasswordConfig passwordConfig;
+
+    @Autowired
+    private JWTUtils jwtUtils;
 
     public ResponseEntity<ApiResponseModel<?>> AdminLogin(HttpServletRequest req, LoginPayloadModel cred) {
         AdminUserModel user = adminUserRepo.findByEmail(cred.getEmail());
@@ -35,13 +40,15 @@ public class AdminUserAuthService {
                     .body(new ApiResponseModel<>(false, "Invalid email or password", null));
         }
         if (user.getMfaEnabled()) {
-            String url = req.getRequestURI().toString();
-            String returnUrl = url + "/verify?user_id="+user.getAdminUuid()
+            String returnUrl = req.getRequestURI().toString() + "/verify?user_id=" + user.getAdminUuid();
             return ResponseEntity
                     .ok()
                     .body(new ApiResponseModel<>(true, "MFA required", returnUrl));
         }
-        return null;
+        LoginResponseModel resp = new LoginResponseModel(
+                jwtUtils.GetAccessToken(user.getEmail(), user.getAdminUuid()), "Bearer", jwtUtils.GetExpirationTime(),
+                jwtUtils.GetRefreshToken(user.getEmail(), user.getAdminUuid()));
+        return ResponseEntity.ok().body(new ApiResponseModel<LoginResponseModel>(true, "Login successful", resp));
     }
 
     public ResponseEntity<ApiResponseModel<String>> AdminSignup(AdminUserModel user) {
