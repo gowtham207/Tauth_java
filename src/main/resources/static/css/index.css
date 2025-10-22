@@ -1,0 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Emblema+One&display=swap");
+
+@theme {
+  --font-emblema-400: "Emblema One", system-ui;
+}
+
+.logo-font {
+  font-family: "Emblema One", system-ui;
+}

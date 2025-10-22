@@ -8,6 +8,9 @@ public class Constants {
 
     public static final List<String> PUBLIC_URLS = List.of(
             "/api/v1/signup",
+            "/ui",
+            "/js",
+            "/css",
             "/api/v1/login",
             "/health",
             "/api/v1/authorizer",

@@ -19,6 +19,10 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/v3/api-docs/**",
                                 "/swagger-ui/**",
+                                "/ui/*",
+                                "/js/*",
+                                "/js/cdn/*",
+                                "/css/*",
                                 "/swagger-ui.html",
                                 "/swagger-ui/index.html",
                                 "/swagger-ui/swagger-ui.css",
@@ -47,4 +51,5 @@ public class SecurityConfig {
             }
         };
     }
+
 }
