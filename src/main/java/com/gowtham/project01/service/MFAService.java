@@ -1,4 +1,4 @@
-package com.gowtham.project01.controller;
+package com.gowtham.project01.service;
 
 import org.springframework.stereotype.Service;
 

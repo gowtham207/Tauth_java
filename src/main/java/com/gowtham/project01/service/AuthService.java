@@ -5,7 +5,6 @@ import com.gowtham.project01.Schema.SignupMFARequestModel;
 import com.gowtham.project01.Schema.SignupResponseModel;
 import com.gowtham.project01.Schema.TokenModel;
 import com.gowtham.project01.configuration.PasswordConfig;
-import com.gowtham.project01.controller.MFAService;
 import com.gowtham.project01.models.UserActivityModel;
 import com.gowtham.project01.models.UserModel;
 import com.gowtham.project01.repo.UserActivityRepo;
@@ -49,9 +48,9 @@ public class AuthService {
 
         public boolean isUserVerified(String token) {
                 TokenModel data = jwtUtils.GetUsernameFromToken(token);
-                String username = data.getSubject().split("//")[0];
-                log.info("This is an info log " + username + "  " + data.getId());
-                UserModel user = userRepo.findByUsernameAndId(username, java.util.UUID.fromString(data.getId()));
+                String email = data.getSubject().split("//")[0];
+                log.info("This is an info log " + email + "  " + data.getId());
+                UserModel user = userRepo.findByUsernameAndId(email, java.util.UUID.fromString(data.getId()));
                 if (user == null) {
                         return false;
                 }
@@ -65,11 +64,11 @@ public class AuthService {
         public ResponseEntity<ApiResponseModel<SignupResponseModel>> SignupUserService(HttpServletRequest req,
                         UserModel newUser) {
                 // check if user already exists
-                UserModel existingUser = userRepo.findByUsername(newUser.getUsername());
+                UserModel existingUser = userRepo.findByEmail(newUser.getEmail());
                 if (existingUser != null) {
                         return ResponseEntity
                                         .status(HttpStatus.CONFLICT)
-                                        .body(new ApiResponseModel<>(false, "Username already exists",
+                                        .body(new ApiResponseModel<>(false, "email already exists",
                                                         null));
                 }
 
@@ -87,7 +86,7 @@ public class AuthService {
                 // create the user
                 UserModel savedUser = userRepo.save(newUser);
                 String MFAUrl = mfaService.getOtpAuthURL("TauthJava",
-                                savedUser.getUsername() + "@" + savedUser.getUserId(),
+                                savedUser.getEmail() + "@" + savedUser.getUserId(),
                                 mfaSecString);
                 SignupResponseModel responseModel = new SignupResponseModel(
                                 "User registered successfully", MFAUrl);
@@ -104,14 +103,14 @@ public class AuthService {
 
         public ResponseEntity<ApiResponseModel<String>> loginUserService(
                         HttpServletRequest req,
-                        String username,
+                        String email,
                         String password) {
-                UserModel LoginUser = userRepo.findByUsername(username);
+                UserModel LoginUser = userRepo.findByEmail(email);
                 if (LoginUser == null) {
                         return ResponseEntity
                                         .status(403)
                                         .body(
-                                                        new ApiResponseModel<>(false, "Username or password incorrect",
+                                                        new ApiResponseModel<>(false, "email or password incorrect",
                                                                         null));
                 }
 
@@ -141,7 +140,7 @@ public class AuthService {
                 userActivityRepo.save(log);
                 return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
-                                .body(new ApiResponseModel<>(false, "Username or password incorrect", null));
+                                .body(new ApiResponseModel<>(false, "email or password incorrect", null));
         }
 
         public ResponseEntity<ApiResponseModel<String>> VerifySignupMFA(
