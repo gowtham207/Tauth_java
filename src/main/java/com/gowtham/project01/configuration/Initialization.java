@@ -8,17 +8,13 @@ import org.springframework.stereotype.Component;
 
 import com.gowtham.project01.models.PermissionModel;
 import com.gowtham.project01.models.RoleModel;
-import com.gowtham.project01.models.UserModel;
 import com.gowtham.project01.repo.PermissionRepo;
 import com.gowtham.project01.repo.RoleRepo;
-import com.gowtham.project01.repo.UserRepo;
 
 import jakarta.transaction.Transactional;
 
 @Component
 public class Initialization implements CommandLineRunner {
-    @Autowired
-    private UserRepo userRepo;
 
     @Autowired
     private RoleRepo roleRepo;
