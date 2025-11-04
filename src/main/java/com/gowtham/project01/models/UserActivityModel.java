@@ -60,8 +60,4 @@ public class UserActivityModel {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private UserType type;
-
 }

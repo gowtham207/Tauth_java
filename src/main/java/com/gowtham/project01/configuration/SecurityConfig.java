@@ -15,14 +15,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // disable CSRF for APIs
                 .authorizeHttpRequests(auth -> auth
                         // allow swagger
-                        .requestMatchers(Constants.PUBLIC_URLS.toArray(new String[0]))
-                        .permitAll()
+                        // .requestMatchers(Constants.PUBLIC_URLS.toArray(new String[0]))
+                        // .permitAll()
                         .requestMatchers("/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/ui/*",
                                 "/js/*",
                                 "/js/cdn/*",
                                 "/css/*",
+                                "/api/v1/auth/*",
                                 "/swagger-ui.html",
                                 "/swagger-ui/index.html",
                                 "/swagger-ui/swagger-ui.css",
@@ -51,5 +52,4 @@ public class SecurityConfig {
             }
         };
     }
-
 }

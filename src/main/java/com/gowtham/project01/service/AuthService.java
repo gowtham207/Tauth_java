@@ -1,9 +1,12 @@
 package com.gowtham.project01.service;
 
 import com.gowtham.project01.Schema.ApiResponseModel;
+import com.gowtham.project01.Schema.LoginResponseModel;
+import com.gowtham.project01.Schema.MFAPayload;
 import com.gowtham.project01.Schema.SignupMFARequestModel;
 import com.gowtham.project01.Schema.SignupResponseModel;
 import com.gowtham.project01.Schema.TokenModel;
+import com.gowtham.project01.configuration.AuthUtils;
 import com.gowtham.project01.configuration.PasswordConfig;
 import com.gowtham.project01.models.UserActivityModel;
 import com.gowtham.project01.models.UserModel;
@@ -12,17 +15,23 @@ import com.gowtham.project01.repo.UserRepo;
 import com.gowtham.project01.utils.JWTUtils;
 import com.gowtham.project01.utils.UserActivityLogUtils;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class AuthService {
 
-        private final UserActivityLogUtils userActivityLogUtils;
+        // @Autowired
+        // private UserActivityLogUtils userActivityLogUtils;
 
         @Autowired
         private UserRepo userRepo;
@@ -34,6 +43,9 @@ public class AuthService {
         @Autowired
         private JWTUtils jwtUtils;
 
+        @Autowired
+        private AuthUtils authUtils;
+
         // mfa service
         @Autowired
         private MFAService mfaService;
@@ -41,10 +53,6 @@ public class AuthService {
         // password encryption and decryption package
         @Autowired
         private PasswordConfig passwordConfig;
-
-        AuthService(UserActivityLogUtils userActivityLogUtils) {
-                this.userActivityLogUtils = userActivityLogUtils;
-        }
 
         public boolean isUserVerified(String token) {
                 TokenModel data = jwtUtils.GetUsernameFromToken(token);
@@ -70,6 +78,13 @@ public class AuthService {
                                         .status(HttpStatus.CONFLICT)
                                         .body(new ApiResponseModel<>(false, "email already exists",
                                                         null));
+                }
+                LocalDateTime dob = newUser.getDOB();
+                int currentYear = LocalDate.now().getYear();
+
+                if (dob.getYear() > currentYear) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                        .body(new ApiResponseModel<>(false, "Invalid dob was entered ", null));
                 }
 
                 // encrypt the password
@@ -101,10 +116,11 @@ public class AuthService {
                                                 responseModel));
         }
 
-        public ResponseEntity<ApiResponseModel<String>> loginUserService(
+        public ResponseEntity<ApiResponseModel<?>> loginUserService(
                         HttpServletRequest req,
                         String email,
                         String password) {
+
                 UserModel LoginUser = userRepo.findByEmail(email);
                 if (LoginUser == null) {
                         return ResponseEntity
@@ -114,7 +130,7 @@ public class AuthService {
                                                                         null));
                 }
 
-                UserActivityModel log = UserActivityLogUtils.createUserActivityLog(
+                UserActivityModel logOut = UserActivityLogUtils.createUserActivityLog(
                                 req,
                                 LoginUser.getUserId(),
                                 "User logged in");
@@ -124,20 +140,29 @@ public class AuthService {
                                 .matches(password, LoginUser.getPassword())) {
 
                         if (!LoginUser.getIsVerified()) {
-                                log.setActivity("Unverified user login attempt");
-                                userActivityRepo.save(log);
+                                logOut.setActivity("Unverified user login attempt");
+                                userActivityRepo.save(logOut);
                                 return ResponseEntity
                                                 .status(HttpStatus.FORBIDDEN)
                                                 .body(new ApiResponseModel<>(false, "User is not active", null));
                         }
                         userRepo.updateLastLoginTime(LoginUser.getUserId());
-                        userActivityRepo.save(log);
+                        // userActivityRepo.save(logOut);
+
+                        if (LoginUser.getMfaEnabled()) {
+                                return ResponseEntity
+                                                .ok()
+                                                .body(new ApiResponseModel<>(true, "Login successful",
+                                                                "Login Successful"));
+                        }
+                        LoginResponseModel resp = authUtils.loginResponse(LoginUser.getUsername(),
+                                        LoginUser.getUserId());
                         return ResponseEntity
                                         .ok()
-                                        .body(new ApiResponseModel<>(true, "Login successful", "Login Successful"));
+                                        .body(new ApiResponseModel<LoginResponseModel>(true, "Login successful", resp));
                 }
-                log.setActivity("Invalid login attempt(Password incorrect)");
-                userActivityRepo.save(log);
+                logOut.setActivity("Invalid login attempt(Password incorrect)");
+                userActivityRepo.save(logOut);
                 return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
                                 .body(new ApiResponseModel<>(false, "email or password incorrect", null));
@@ -172,6 +197,28 @@ public class AuthService {
                 return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
                                 .body(new ApiResponseModel<>(false, "Invalid MFA code", null));
+        }
+
+        public ResponseEntity<ApiResponseModel<?>> LoginMFAService(HttpServletRequest req, MFAPayload payload) {
+                UserModel user = userRepo.findById(java.util.UUID.fromString(payload.getUuid())).orElse(null);
+                if (user == null) {
+                        return ResponseEntity.status(401).body(new ApiResponseModel<>(
+                                        false, "Unauthorized user", null));
+                }
+                Boolean verificationStatus = mfaService.verifyCode(
+                                user.getMfaSecret(),
+                                Integer.parseInt(payload.getMfa()));
+                if (verificationStatus) {
+                        UserActivityLogUtils.createUserActivityLog(req, user.getUserId(),
+                                        "MFA code verification Successfully");
+                        LoginResponseModel val = authUtils.loginResponse(user.getUsername(), user.getUserId());
+                        return ResponseEntity.status(200)
+                                        .body(new ApiResponseModel<LoginResponseModel>(true, "MFA login success", val));
+                }
+                UserActivityLogUtils.createUserActivityLog(req, user.getUserId(), "MFA code verification Failed");
+                return ResponseEntity.status(200)
+                                .body(new ApiResponseModel<String>(true, "MFA login success", ""));
+
         }
 
 }

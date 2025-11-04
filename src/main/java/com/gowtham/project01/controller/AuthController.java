@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.gowtham.project01.Schema.ApiResponseModel;
 import com.gowtham.project01.Schema.LoginPayloadModel;
+import com.gowtham.project01.Schema.MFAPayload;
 import com.gowtham.project01.Schema.SignupMFARequestModel;
 import com.gowtham.project01.Schema.SignupResponseModel;
 import com.gowtham.project01.Schema.TokenPayloadModel;
@@ -40,8 +41,8 @@ public class AuthController {
                                                 new TokenResponseModel(true, "Valid token")));
         }
 
-        @PostMapping("/login")
-        public ResponseEntity<ApiResponseModel<String>> LoginUser(HttpServletRequest req,
+        @PostMapping("/auth/login")
+        public ResponseEntity<ApiResponseModel<?>> LoginUser(HttpServletRequest req,
                         @RequestBody LoginPayloadModel entity) {
                 String email = entity.getEmail();
                 String password = entity.getPassword();
@@ -53,16 +54,22 @@ public class AuthController {
                                 .body(new ApiResponseModel<>(false, "Email or password incorrect", null));
         }
 
-        @PostMapping("/signup")
+        @PostMapping("/auth/signup")
         public ResponseEntity<ApiResponseModel<SignupResponseModel>> CreateUser(HttpServletRequest req,
                         @RequestBody UserModel entity) {
                 return authService.SignupUserService(req, entity);
         }
 
-        @PostMapping("/signup/mfa")
+        @PostMapping("auth/signup/mfa")
         public ResponseEntity<ApiResponseModel<String>> postMethodName(HttpServletRequest req,
                         @RequestBody SignupMFARequestModel entity) {
                 return authService.VerifySignupMFA(req, entity);
+        }
+
+        @PostMapping("/auth/login/mfa")
+        public ResponseEntity<ApiResponseModel<?>> postMethodName(HttpServletRequest req,
+                        @RequestBody MFAPayload entity) {
+                return authService.LoginMFAService(req, entity);
         }
 
 }

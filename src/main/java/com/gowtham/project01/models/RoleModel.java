@@ -37,12 +37,12 @@ public class RoleModel {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", unique = true)
     private String name;
 
     @ElementCollection
     @Column(name = "permission_list")
-    private List<Integer> permissionList;
+    private List<Long> permissionList;
 
     @CreatedDate
     @JsonIgnore
@@ -57,5 +57,4 @@ public class RoleModel {
     @Column(name = "deleted_at")
     @JsonIgnore
     private LocalDateTime deletedAt;
-
 }
