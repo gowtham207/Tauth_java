@@ -43,6 +43,7 @@ public class AuthService {
         @Autowired
         private JWTUtils jwtUtils;
 
+        // auth utils
         @Autowired
         private AuthUtils authUtils;
 
@@ -73,6 +74,12 @@ public class AuthService {
                         UserModel newUser) {
                 // check if user already exists
                 UserModel existingUser = userRepo.findByEmail(newUser.getEmail());
+                if (userRepo.findByUsername(newUser.getUsername()) != null) {
+                        return ResponseEntity
+                                        .status(HttpStatus.CONFLICT)
+                                        .body(new ApiResponseModel<>(false, "username was already exists",
+                                                        null));
+                }
                 if (existingUser != null) {
                         return ResponseEntity
                                         .status(HttpStatus.CONFLICT)
@@ -130,7 +137,7 @@ public class AuthService {
                                                                         null));
                 }
 
-                UserActivityModel logOut = UserActivityLogUtils.createUserActivityLog(
+                UserActivityModel log = UserActivityLogUtils.createUserActivityLog(
                                 req,
                                 LoginUser.getUserId(),
                                 "User logged in");
@@ -140,14 +147,14 @@ public class AuthService {
                                 .matches(password, LoginUser.getPassword())) {
 
                         if (!LoginUser.getIsVerified()) {
-                                logOut.setActivity("Unverified user login attempt");
-                                userActivityRepo.save(logOut);
+                                log.setActivity("Unverified user login attempt");
+                                userActivityRepo.save(log);
                                 return ResponseEntity
                                                 .status(HttpStatus.FORBIDDEN)
                                                 .body(new ApiResponseModel<>(false, "User is not active", null));
                         }
                         userRepo.updateLastLoginTime(LoginUser.getUserId());
-                        // userActivityRepo.save(logOut);
+                        // userActivityRepo.save(log);
 
                         if (LoginUser.getMfaEnabled()) {
                                 return ResponseEntity
@@ -155,14 +162,17 @@ public class AuthService {
                                                 .body(new ApiResponseModel<>(true, "Login successful",
                                                                 "Login Successful"));
                         }
+
                         LoginResponseModel resp = authUtils.loginResponse(LoginUser.getUsername(),
                                         LoginUser.getUserId());
+                        log.setActivity("User successfully Login");
+                        userActivityRepo.save(log);
                         return ResponseEntity
                                         .ok()
                                         .body(new ApiResponseModel<LoginResponseModel>(true, "Login successful", resp));
                 }
-                logOut.setActivity("Invalid login attempt(Password incorrect)");
-                userActivityRepo.save(logOut);
+                log.setActivity("Invalid login attempt(Password incorrect)");
+                userActivityRepo.save(log);
                 return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
                                 .body(new ApiResponseModel<>(false, "email or password incorrect", null));
