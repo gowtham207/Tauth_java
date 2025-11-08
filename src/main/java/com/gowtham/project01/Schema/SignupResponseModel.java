@@ -8,4 +8,5 @@ import lombok.Data;
 public class SignupResponseModel {
     private String message;
     private String mfaUrl;
+    private String user_id;
 }

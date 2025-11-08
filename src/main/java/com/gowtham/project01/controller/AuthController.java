@@ -18,8 +18,10 @@ import com.gowtham.project01.Schema.TokenResponseModel;
 import com.gowtham.project01.models.UserModel;
 import com.gowtham.project01.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/v1")
 public class AuthController {
 
@@ -55,22 +57,21 @@ public class AuthController {
                                 .body(new ApiResponseModel<>(false, "Email or password incorrect", null));
         }
 
-        @PostMapping("/auth/signup")
+        @PostMapping("/auth/register")
         public ResponseEntity<ApiResponseModel<SignupResponseModel>> CreateUser(HttpServletRequest req,
                         @RequestBody UserModel entity) {
                 return authService.SignupUserService(req, entity);
         }
 
-        @PutMapping("auth/signup/mfa")
-        public ResponseEntity<ApiResponseModel<String>> postMethodName(HttpServletRequest req,
+        @PutMapping("/auth/mfa/setup")
+        public ResponseEntity<ApiResponseModel<String>> MfaEnable(HttpServletRequest req,
                         @RequestBody SignupMFARequestModel entity) {
                 return authService.VerifySignupMFA(req, entity);
         }
 
-        @PostMapping("/auth/login/mfa")
-        public ResponseEntity<ApiResponseModel<?>> postMethodName(HttpServletRequest req,
+        @PostMapping("/auth/mfa/verify")
+        public ResponseEntity<ApiResponseModel<?>> MFAVerification(HttpServletRequest req,
                         @RequestBody MFAPayload entity) {
                 return authService.LoginMFAService(req, entity);
         }
-
 }

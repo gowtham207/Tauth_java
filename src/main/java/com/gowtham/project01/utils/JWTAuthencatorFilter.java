@@ -25,6 +25,7 @@ public class JWTAuthencatorFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
+        System.out.println("Request Path: " + path);
         return Constants.PUBLIC_URLS.stream().anyMatch(url -> path.toLowerCase().contains(url.toLowerCase()));
     }
 

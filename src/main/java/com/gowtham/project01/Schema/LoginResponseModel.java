@@ -6,9 +6,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class LoginResponseModel {
-
-    private String AccessToken;
-    private String tokenType = "Bearer";
-    private Long expiresIn; // in seconds
-    private String refreshToken;
+    private String user_id;
 }

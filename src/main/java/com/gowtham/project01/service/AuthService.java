@@ -2,6 +2,7 @@ package com.gowtham.project01.service;
 
 import com.gowtham.project01.Schema.ApiResponseModel;
 import com.gowtham.project01.Schema.LoginResponseModel;
+import com.gowtham.project01.Schema.AccessTokenModel;
 import com.gowtham.project01.Schema.MFAPayload;
 import com.gowtham.project01.Schema.SignupMFARequestModel;
 import com.gowtham.project01.Schema.SignupResponseModel;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -111,7 +113,7 @@ public class AuthService {
                                 savedUser.getEmail() + "@" + savedUser.getUserId(),
                                 mfaSecString);
                 SignupResponseModel responseModel = new SignupResponseModel(
-                                "User registered successfully", MFAUrl);
+                                "User registered successfully", MFAUrl, newUser.getUserId().toString());
 
                 // logging the user activity
                 UserActivityLogUtils.createUserActivityLog(req, savedUser.getUserId(),
@@ -159,17 +161,18 @@ public class AuthService {
                         if (LoginUser.getMfaEnabled()) {
                                 return ResponseEntity
                                                 .ok()
-                                                .body(new ApiResponseModel<>(true, "Login successful",
-                                                                "Login Successful"));
+                                                .body(new ApiResponseModel<LoginResponseModel>(true, "Login successful",
+                                                                new LoginResponseModel(
+                                                                                LoginUser.getUserId().toString())));
                         }
 
-                        LoginResponseModel resp = authUtils.loginResponse(LoginUser.getUsername(),
+                        AccessTokenModel resp = authUtils.loginResponse(LoginUser.getUsername(),
                                         LoginUser.getUserId());
                         log.setActivity("User successfully Login");
                         userActivityRepo.save(log);
                         return ResponseEntity
                                         .ok()
-                                        .body(new ApiResponseModel<LoginResponseModel>(true, "Login successful", resp));
+                                        .body(new ApiResponseModel<AccessTokenModel>(true, "Login successful", resp));
                 }
                 log.setActivity("Invalid login attempt(Password incorrect)");
                 userActivityRepo.save(log);
@@ -182,28 +185,32 @@ public class AuthService {
                         HttpServletRequest req,
                         SignupMFARequestModel entity) {
                 // check the user exists
+                log.info(" ✌️ MFA Trigger" + entity.getUserId());
                 UserModel user = userRepo.findById(java.util.UUID.fromString(entity.getUserId())).orElse(null);
+                // log.info(" IN US " + user.toString());
                 if (user == null) {
                         return ResponseEntity
                                         .status(HttpStatus.NOT_FOUND)
                                         .body(new ApiResponseModel<>(false, "User not found", null));
                 }
-
-                Boolean isOldCodeValid = mfaService.verifyCode(
+                log.info(" OUT US " + user.getMfaSecret());
+                Boolean mfaCodeVerification = mfaService.verifyCode(
                                 user.getMfaSecret(),
-                                Integer.parseInt(entity.getOldMfaCode()));
-
-                Boolean isNewCodeValid = mfaService.verifyCode(
-                                user.getMfaSecret(),
-                                Integer.parseInt(entity.getNewMfaCode()));
-                if (isOldCodeValid || isNewCodeValid) {
-                        UserActivityLogUtils.createUserActivityLog(req, user.getUserId(), "MFA code verified");
+                                Integer.parseInt(entity.getMfaCode()));
+                if (mfaCodeVerification) {
+                        user.setMfaEnabled(true);
+                        userRepo.save(user);
+                        UserActivityModel log = UserActivityLogUtils.createUserActivityLog(req, user.getUserId(),
+                                        "MFA code verified");
+                        userActivityRepo.save(log);
                         return ResponseEntity
                                         .status(HttpStatus.ACCEPTED)
                                         .body(new ApiResponseModel<>(true,
                                                         "MFA code verified successfully", null));
                 }
-                UserActivityLogUtils.createUserActivityLog(req, user.getUserId(), "MFA code verification failed");
+                UserActivityModel log = UserActivityLogUtils.createUserActivityLog(req, user.getUserId(),
+                                "MFA code verification failed");
+                userActivityRepo.save(log);
                 return ResponseEntity
                                 .status(HttpStatus.FORBIDDEN)
                                 .body(new ApiResponseModel<>(false, "Invalid MFA code", null));
@@ -221,9 +228,9 @@ public class AuthService {
                 if (verificationStatus) {
                         UserActivityLogUtils.createUserActivityLog(req, user.getUserId(),
                                         "MFA code verification Successfully");
-                        LoginResponseModel val = authUtils.loginResponse(user.getUsername(), user.getUserId());
+                        AccessTokenModel val = authUtils.loginResponse(user.getUsername(), user.getUserId());
                         return ResponseEntity.status(200)
-                                        .body(new ApiResponseModel<LoginResponseModel>(true, "MFA login success", val));
+                                        .body(new ApiResponseModel<AccessTokenModel>(true, "MFA login success", val));
                 }
                 UserActivityLogUtils.createUserActivityLog(req, user.getUserId(), "MFA code verification Failed");
                 return ResponseEntity.status(200)

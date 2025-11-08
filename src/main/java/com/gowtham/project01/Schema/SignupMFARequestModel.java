@@ -7,6 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class SignupMFARequestModel {
     private String userId;
-    private String oldMfaCode;
-    private String newMfaCode;
+    private String mfaCode;
 }

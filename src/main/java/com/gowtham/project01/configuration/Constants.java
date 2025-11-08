@@ -13,8 +13,8 @@ public class Constants {
             "/health",
             "/auth",
             "/api/v1/auth/",
+            "/api/v1/auth/",
             "/api/v1/authorizer",
             "/v3/api-docs",
             "/swagger-ui");
-
 }
