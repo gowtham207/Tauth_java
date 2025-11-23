@@ -83,9 +83,6 @@ public class UserModel {
     @JsonIgnore
     private Boolean mfaEnabled = false;
 
-    @Column(name = "mfa_secret")
-    @JsonIgnore
-    private String mfaSecret;
 
     @Enumerated(EnumType.STRING)
     @JsonIgnore
